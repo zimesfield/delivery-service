@@ -1,0 +1,4 @@
+org.springframework.test.context.ContextCustomizerFactory = com.zimesfield.\
+    delivery.config.SqlTestContainersSpringContextCustomizerFactory,com.\
+    zimesfield.delivery.config.TestContainersSpringContextCustomizerFactory,com.\
+    zimesfield.delivery.config.KafkaTestContainersSpringContextCustomizerFactory
