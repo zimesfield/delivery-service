@@ -13,7 +13,8 @@
 # Full reference is available at:
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
-
+server:
+  port: 8082
 ---
 # Conditionally disable springdoc on missing api-docs profile
 spring:
@@ -23,6 +24,8 @@ spring:
 springdoc:
   api-docs:
     enabled: false
+    path: /api-docs
+
 ---
 feign:
   circuitbreaker:
@@ -179,8 +182,9 @@ spring:
             issuer-uri: http://localhost:9080/realms/jhipster
         registration:
           oidc:
-            client-id: internal
-            client-secret: internal
+            client-id: web_app
+            client-secret: web_app
+            authorization-grant-type: authorization_code
             scope: openid, profile, email, offline_access # last one for refresh tokens
       resourceserver:
         jwt:

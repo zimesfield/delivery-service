@@ -1,0 +1,70 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            preConditions:
+                -   onFail: MARK_RAN
+                    not:
+                        tableExists:
+                            tableName: raeda_delivery
+            changes:
+                -   createTable:
+                        tableName: raeda_delivery
+                        columns:
+                            -   column:
+                                    name: id
+                                    type: varchar(100)
+                                    constraints:
+                                        nullable: false
+                                        primaryKey: true
+                                        primaryKeyName: raeda_delivery_pkey
+                            -   column:
+                                    name: delivery_id
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: created_by
+                                    type: varchar(50)
+                            -   column:
+                                    name: last_modified_by
+                                    type: varchar(50)
+                            -   column:
+                                    name: created_date
+                                    type: timestamp
+                            -   column:
+                                    name: last_modified_date
+                                    type: timestamp
+                            -   column:
+                                    name: sender_id
+                                    type: bigint
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: receiver_id
+                                    type: bigint
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: status
+                                    type: varchar(30)
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: delivery_type
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+
+                            -   column:
+                                    name: express_delivery
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+
+                            -   column:
+                                    name: pickup_delivery
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+

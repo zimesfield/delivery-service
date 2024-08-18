@@ -14,7 +14,7 @@ import org.springframework.core.env.Profiles;
 import tech.jhipster.config.JHipsterConstants;
 
 /**
- * Aspect for logging execution of service and repository Spring components.
+ * Aspect for logging execution of service and rdbms Spring components.
  *
  * By default, it only runs with the "dev" profile.
  */

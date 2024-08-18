@@ -1,0 +1,39 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            preConditions:
+                -   onFail: MARK_RAN
+                    not:
+                        tableExists:
+                            tableName: raeda_user_authority
+            changes:
+                -   createTable:
+                        tableName: raeda_user_authority
+                        columns:
+                            -   column:
+                                    name: authority_name
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: user_id
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+                -   addPrimaryKey:
+                        columnNames: user_id, authority_name
+                        tableName: raeda_user_authority
+                -   addForeignKeyConstraint:
+                        baseColumnNames: authority_name
+                        baseTableName: raeda_user_authority
+                        constraintName: fk_authority_name
+                        referencedColumnNames: name
+                        referencedTableName: raeda_authority
+                -   addForeignKeyConstraint:
+                        baseColumnNames: user_id
+                        baseTableName: raeda_user_authority
+                        constraintName: fk_user_id
+                        referencedColumnNames: id
+                        referencedTableName: raeda_user
+

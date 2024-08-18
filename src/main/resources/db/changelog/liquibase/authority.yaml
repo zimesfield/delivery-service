@@ -1,0 +1,30 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            preConditions:
+                -   onFail: MARK_RAN
+                    not:
+                        tableExists:
+                            tableName: raeda_authority
+            changes:
+                -   createTable:
+                        tableName: raeda_authority
+                        columns:
+                            -   column:
+                                    name: name
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+                                        primaryKey: true
+                                        primaryKeyName: ux_authority_name
+                -   loadData:
+                        file: db/changelog/liquibase/data/authority.csv
+                        separator: ';'
+                        tableName: raeda_authority
+                        usePreparedStatements: true
+                        columns:
+                            -   column:
+                                    name: name
+                                    type: string
+

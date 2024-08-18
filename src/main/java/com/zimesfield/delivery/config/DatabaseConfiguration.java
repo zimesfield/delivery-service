@@ -15,10 +15,10 @@ import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.h2.H2ConfigurationHelper;
 
 @Configuration
-@EnableJpaRepositories({ "com.zimesfield.delivery.repository" })
+@EnableJpaRepositories({ "com.zimesfield.delivery.adapter.rdbms" })
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement
-@EnableElasticsearchRepositories("com.zimesfield.delivery.repository.search")
+@EnableElasticsearchRepositories("com.zimesfield.delivery.adapter.search")
 public class DatabaseConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseConfiguration.class);

@@ -1,0 +1,85 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            preConditions:
+                -   onFail: MARK_RAN
+                    not:
+                        tableExists:
+                            tableName: raeda_user
+            changes:
+                -   createTable:
+                        tableName: raeda_user
+                        columns:
+                            -   column:
+                                    name: id
+                                    type: varchar(100)
+                                    constraints:
+                                        nullable: false
+                                        primaryKey: true
+                                        primaryKeyName: ux_user_pkey
+                            -   column:
+                                    name: created_date
+                                    type: timestamp
+                            -   column:
+                                    name: last_modified_date
+                                    type: timestamp
+                            -   column:
+                                    name: created_by
+                                    type: varchar(50)
+                            -   column:
+                                    name: last_modified_by
+                                    type: varchar(50)
+                            -   column:
+                                    name: login
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+                                        unique: true
+                                        uniqueConstraintName: ux_user_login
+                            -   column:
+                                    name: first_name
+                                    type: varchar(50)
+                            -   column:
+                                    name: last_name
+                                    type: varchar(50)
+                            -   column:
+                                    name: phone_number
+                                    type: varchar(15)
+                            #                  constraints:
+                            #                    nullable: false
+                            -   column:
+                                    name: email
+                                    type: varchar(191)
+                                    constraints:
+                                        nullable: false
+                                        unique: true
+                                        uniqueConstraintName: ux_user_email
+                            -   column:
+                                    name: image_url
+                                    type: varchar(250)
+                            -   column:
+                                    name: lang_key
+                                    type: varchar(250)
+                            -   column:
+                                    name: activated
+                                    type: boolean
+                                    valueBoolean: "false"
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: country
+                                    type: varchar(250)
+                            -   column:
+                                    name: state
+                                    type: varchar(250)
+                            -   column:
+                                    name: area
+                                    type: varchar(250)
+                            -   column:
+                                    name: street
+                                    type: varchar(50)
+                            -   column:
+                                    name: landmark
+                                    type: varchar(250)
+

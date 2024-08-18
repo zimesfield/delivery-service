@@ -1,0 +1,53 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            preConditions:
+                -   onFail: MARK_RAN
+                    not:
+                        tableExists:
+                            tableName: raeda_delivery_item
+            changes:
+                -   createTable:
+                        tableName: raeda_delivery_item
+                        columns:
+                            -   column:
+                                    name: id
+                                    type: bigint
+                                    constraints:
+                                        nullable: false
+                                        primaryKey: true
+                                        primaryKeyName: raeda_delivery_item_pkey
+                            -   column:
+                                    name: uuid
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: name
+                                    type: varchar(50)
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: description
+                                    type: varchar(200)
+                            -   column:
+                                    name: mass
+                                    type: integer
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: quantity
+                                    type: bigint
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: measurement
+                                    type: varchar(30)
+                                    constraints:
+                                        nullable: false
+                            -   column:
+                                    name: delivery_id
+                                    type: bigint
+                                    constraints:
+                                        nullable: true

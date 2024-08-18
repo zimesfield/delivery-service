@@ -1,6 +1,6 @@
 package com.zimesfield.delivery.security;
 
-import com.zimesfield.delivery.config.Constants;
+import com.zimesfield.delivery.adapter.util.Constants;
 import java.util.Optional;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;

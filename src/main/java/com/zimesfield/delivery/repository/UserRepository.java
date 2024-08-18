@@ -1,27 +1,26 @@
 package com.zimesfield.delivery.repository;
 
-import com.zimesfield.delivery.domain.User;
+import com.zimesfield.delivery.adapter.rdbms.entity.UserEntity;
+import com.zimesfield.delivery.domain.model.UserModel;
 import java.util.Optional;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
- * Spring Data JPA repository for the {@link User} entity.
+ * Spring Data JPA rdbms for the {@link UserEntity} entity.
  */
-@Repository
-public interface UserRepository extends JpaRepository<User, String> {
-    String USERS_BY_LOGIN_CACHE = "usersByLogin";
+public interface UserRepository {
+    Optional<UserModel> findOneByLogin(String login);
 
-    String USERS_BY_EMAIL_CACHE = "usersByEmail";
+    Optional<UserModel> findOneWithAuthoritiesByLogin(String login);
 
-    Optional<User> findOneByLogin(String login);
+    Page<UserModel> findAllByIdNotNullAndActivatedIsTrue(Pageable pageable);
 
-    @EntityGraph(attributePaths = "authorities")
-    @Cacheable(cacheNames = USERS_BY_LOGIN_CACHE)
-    Optional<User> findOneWithAuthoritiesByLogin(String login);
+    Optional<UserModel> findById(String id);
 
-    Page<User> findAllByIdNotNullAndActivatedIsTrue(Pageable pageable);
+    UserModel save(UserModel userModel);
+
+    Page<UserModel> findAll(Pageable pageable);
+
+    void deleteAll();
 }

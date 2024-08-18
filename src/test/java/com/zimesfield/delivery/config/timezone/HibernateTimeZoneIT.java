@@ -4,8 +4,8 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.zimesfield.delivery.IntegrationTest;
-import com.zimesfield.delivery.repository.timezone.DateTimeWrapper;
-import com.zimesfield.delivery.repository.timezone.DateTimeWrapperRepository;
+import com.zimesfield.delivery.adapter.rdbms.timezone.DateTimeWrapper;
+import com.zimesfield.delivery.adapter.rdbms.timezone.DateTimeWrapperRepository;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import org.junit.jupiter.api.BeforeEach;
@@ -158,7 +158,7 @@ class HibernateTimeZoneIT {
     }
 
     private String generateSqlRequest(String fieldName, long id) {
-        return format("SELECT %s FROM jhi_date_time_wrapper where id=%d", fieldName, id);
+        return format("SELECT %s FROM raeda_date_time_wrapper where id=%d", fieldName, id);
     }
 
     private void assertThatValueFromSqlRowSetIsEqualToExpectedValue(SqlRowSet sqlRowSet, String expectedValue) {

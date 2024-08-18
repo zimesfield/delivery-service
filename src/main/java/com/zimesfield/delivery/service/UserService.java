@@ -1,17 +1,21 @@
 package com.zimesfield.delivery.service;
 
-import com.zimesfield.delivery.config.Constants;
-import com.zimesfield.delivery.domain.Authority;
-import com.zimesfield.delivery.domain.User;
-import com.zimesfield.delivery.repository.AuthorityRepository;
+import static com.zimesfield.delivery.repository.Util.USERS_BY_EMAIL_CACHE;
+import static com.zimesfield.delivery.repository.Util.USERS_BY_LOGIN_CACHE;
+
+import com.zimesfield.delivery.adapter.mapper.AdminUserMapper;
+import com.zimesfield.delivery.adapter.rdbms.AuthorityRepository;
+import com.zimesfield.delivery.adapter.rdbms.entity.Authority;
+import com.zimesfield.delivery.adapter.search.UserSearchRepository;
+import com.zimesfield.delivery.adapter.util.Constants;
+import com.zimesfield.delivery.domain.model.AdminUserModel;
+import com.zimesfield.delivery.domain.model.UserModel;
 import com.zimesfield.delivery.repository.UserRepository;
-import com.zimesfield.delivery.repository.search.UserSearchRepository;
 import com.zimesfield.delivery.security.SecurityUtils;
-import com.zimesfield.delivery.service.dto.AdminUserDTO;
-import com.zimesfield.delivery.service.dto.UserDTO;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -27,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Service class for managing users.
  */
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class UserService {
@@ -41,17 +46,9 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
-    public UserService(
-        UserRepository userRepository,
-        UserSearchRepository userSearchRepository,
-        AuthorityRepository authorityRepository,
-        CacheManager cacheManager
-    ) {
-        this.userRepository = userRepository;
-        this.userSearchRepository = userSearchRepository;
-        this.authorityRepository = authorityRepository;
-        this.cacheManager = cacheManager;
-    }
+    private final AdminUserMapper adminUserMapper;
+
+    private static final String UPDATED_AT = "updated_at";
 
     /**
      * Update basic information (first name, last name, email, language) for the current user.
@@ -76,22 +73,22 @@ public class UserService {
                 userRepository.save(user);
                 userSearchRepository.index(user);
                 this.clearUserCaches(user);
-                log.debug("Changed Information for User: {}", user);
+                log.debug("Changed Information for UserModel: {}", user);
             });
     }
 
     @Transactional(readOnly = true)
-    public Page<AdminUserDTO> getAllManagedUsers(Pageable pageable) {
-        return userRepository.findAll(pageable).map(AdminUserDTO::new);
+    public Page<AdminUserModel> getAllManagedUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(adminUserMapper::toModel);
     }
 
     @Transactional(readOnly = true)
-    public Page<UserDTO> getAllPublicUsers(Pageable pageable) {
-        return userRepository.findAllByIdNotNullAndActivatedIsTrue(pageable).map(UserDTO::new);
+    public Page<UserModel> getAllPublicUsers(Pageable pageable) {
+        return userRepository.findAllByIdNotNullAndActivatedIsTrue(pageable);
     }
 
     @Transactional(readOnly = true)
-    public Optional<User> getUserWithAuthoritiesByLogin(String login) {
+    public Optional<UserModel> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login);
     }
 
@@ -104,10 +101,10 @@ public class UserService {
         return authorityRepository.findAll().stream().map(Authority::getName).toList();
     }
 
-    private User syncUserWithIdP(Map<String, Object> details, User user) {
-        // save authorities in to sync user roles/groups between IdP and JHipster's local database
+    private UserModel syncUserWithIdP(Map<String, Object> details, UserModel userModel) {
+        // save authorities in to sync userModel roles/groups between IdP and JHipster's local database
         Collection<String> dbAuthorities = getAuthorities();
-        Collection<String> userAuthorities = user.getAuthorities().stream().map(Authority::getName).toList();
+        Collection<String> userAuthorities = userModel.getAuthorities().stream().map(Authority::getName).toList();
         for (String authority : userAuthorities) {
             if (!dbAuthorities.contains(authority)) {
                 log.debug("Saving authority '{}' in local database", authority);
@@ -117,43 +114,55 @@ public class UserService {
             }
         }
         // save account in to sync users between IdP and JHipster's local database
-        Optional<User> existingUser = userRepository.findOneByLogin(user.getLogin());
+        Optional<UserModel> existingUser = userRepository.findOneByLogin(userModel.getLogin());
         if (existingUser.isPresent()) {
             // if IdP sends last updated information, use it to determine if an update should happen
-            if (details.get("updated_at") != null) {
+            if (details.get(UPDATED_AT) != null) {
                 Instant dbModifiedDate = existingUser.orElseThrow().getLastModifiedDate();
                 Instant idpModifiedDate;
-                if (details.get("updated_at") instanceof Instant) {
-                    idpModifiedDate = (Instant) details.get("updated_at");
+                if (details.get(UPDATED_AT) instanceof Instant) {
+                    idpModifiedDate = (Instant) details.get(UPDATED_AT);
                 } else {
-                    idpModifiedDate = Instant.ofEpochSecond((Integer) details.get("updated_at"));
+                    idpModifiedDate = Instant.ofEpochSecond((Integer) details.get(UPDATED_AT));
                 }
                 if (idpModifiedDate.isAfter(dbModifiedDate)) {
-                    log.debug("Updating user '{}' in local database", user.getLogin());
-                    updateUser(user.getFirstName(), user.getLastName(), user.getEmail(), user.getLangKey(), user.getImageUrl());
+                    log.debug("Updating userModel '{}' in local database", userModel.getLogin());
+                    updateUser(
+                        userModel.getFirstName(),
+                        userModel.getLastName(),
+                        userModel.getEmail(),
+                        userModel.getLangKey(),
+                        userModel.getImageUrl()
+                    );
                 }
                 // no last updated info, blindly update
             } else {
-                log.debug("Updating user '{}' in local database", user.getLogin());
-                updateUser(user.getFirstName(), user.getLastName(), user.getEmail(), user.getLangKey(), user.getImageUrl());
+                log.debug("Updating userModel '{}' in local database", userModel.getLogin());
+                updateUser(
+                    userModel.getFirstName(),
+                    userModel.getLastName(),
+                    userModel.getEmail(),
+                    userModel.getLangKey(),
+                    userModel.getImageUrl()
+                );
             }
         } else {
-            log.debug("Saving user '{}' in local database", user.getLogin());
-            userRepository.save(user);
-            this.clearUserCaches(user);
+            log.debug("Saving userModel '{}' in local database", userModel.getLogin());
+            userRepository.save(userModel);
+            this.clearUserCaches(userModel);
         }
-        return user;
+        return userModel;
     }
 
     /**
      * Returns the user from an OAuth 2.0 login or resource server with JWT.
-     * Synchronizes the user in the local repository.
+     * Synchronizes the user in the local rdbms.
      *
      * @param authToken the authentication token.
      * @return the user from the authentication.
      */
     @Transactional
-    public AdminUserDTO getUserFromAuthentication(AbstractAuthenticationToken authToken) {
+    public AdminUserModel getUserFromAuthentication(AbstractAuthenticationToken authToken) {
         Map<String, Object> attributes;
         if (authToken instanceof OAuth2AuthenticationToken) {
             attributes = ((OAuth2AuthenticationToken) authToken).getPrincipal().getAttributes();
@@ -162,8 +171,8 @@ public class UserService {
         } else {
             throw new IllegalArgumentException("AuthenticationToken is not OAuth2 or JWT!");
         }
-        User user = getUser(attributes);
-        user.setAuthorities(
+        UserModel userModel = getUser(attributes);
+        userModel.setAuthorities(
             authToken
                 .getAuthorities()
                 .stream()
@@ -176,11 +185,11 @@ public class UserService {
                 .collect(Collectors.toSet())
         );
 
-        return new AdminUserDTO(syncUserWithIdP(attributes, user));
+        return adminUserMapper.toModel(syncUserWithIdP(attributes, userModel));
     }
 
-    private static User getUser(Map<String, Object> details) {
-        User user = new User();
+    private static UserModel getUser(Map<String, Object> details) {
+        UserModel userModel = UserModel.builder().build();
         Boolean activated = Boolean.TRUE;
         String sub = String.valueOf(details.get("sub"));
         String username = null;
@@ -189,37 +198,37 @@ public class UserService {
         }
         // handle resource server JWT, where sub claim is email and uid is ID
         if (details.get("uid") != null) {
-            user.setId((String) details.get("uid"));
-            user.setLogin(sub);
+            userModel.setId((String) details.get("uid"));
+            userModel.setLogin(sub);
         } else {
-            user.setId(sub);
+            userModel.setId(sub);
         }
         if (username != null) {
-            user.setLogin(username);
-        } else if (user.getLogin() == null) {
-            user.setLogin(user.getId());
+            userModel.setLogin(username);
+        } else if (userModel.getLogin() == null) {
+            userModel.setLogin(userModel.getId());
         }
         if (details.get("given_name") != null) {
-            user.setFirstName((String) details.get("given_name"));
+            userModel.setFirstName((String) details.get("given_name"));
         } else if (details.get("name") != null) {
-            user.setFirstName((String) details.get("name"));
+            userModel.setFirstName((String) details.get("name"));
         }
         if (details.get("family_name") != null) {
-            user.setLastName((String) details.get("family_name"));
+            userModel.setLastName((String) details.get("family_name"));
         }
         if (details.get("email_verified") != null) {
             activated = (Boolean) details.get("email_verified");
         }
         if (details.get("email") != null) {
-            user.setEmail(((String) details.get("email")).toLowerCase());
+            userModel.setEmail(((String) details.get("email")).toLowerCase());
         } else if (sub.contains("|") && (username != null && username.contains("@"))) {
             // special handling for Auth0
-            user.setEmail(username);
+            userModel.setEmail(username);
         } else {
-            user.setEmail(sub);
+            userModel.setEmail(sub);
         }
         if (details.get("langKey") != null) {
-            user.setLangKey((String) details.get("langKey"));
+            userModel.setLangKey((String) details.get("langKey"));
         } else if (details.get("locale") != null) {
             // trim off country code if it exists
             String locale = (String) details.get("locale");
@@ -228,22 +237,22 @@ public class UserService {
             } else if (locale.contains("-")) {
                 locale = locale.substring(0, locale.indexOf('-'));
             }
-            user.setLangKey(locale.toLowerCase());
+            userModel.setLangKey(locale.toLowerCase());
         } else {
             // set langKey to default if not specified by IdP
-            user.setLangKey(Constants.DEFAULT_LANGUAGE);
+            userModel.setLangKey(Constants.DEFAULT_LANGUAGE);
         }
         if (details.get("picture") != null) {
-            user.setImageUrl((String) details.get("picture"));
+            userModel.setImageUrl((String) details.get("picture"));
         }
-        user.setActivated(activated);
-        return user;
+        userModel.setActivated(activated);
+        return userModel;
     }
 
-    private void clearUserCaches(User user) {
-        Objects.requireNonNull(cacheManager.getCache(UserRepository.USERS_BY_LOGIN_CACHE)).evict(user.getLogin());
-        if (user.getEmail() != null) {
-            Objects.requireNonNull(cacheManager.getCache(UserRepository.USERS_BY_EMAIL_CACHE)).evict(user.getEmail());
+    private void clearUserCaches(UserModel userModel) {
+        Objects.requireNonNull(cacheManager.getCache(USERS_BY_LOGIN_CACHE)).evict(userModel.getLogin());
+        if (userModel.getEmail() != null) {
+            Objects.requireNonNull(cacheManager.getCache(USERS_BY_EMAIL_CACHE)).evict(userModel.getEmail());
         }
     }
 }

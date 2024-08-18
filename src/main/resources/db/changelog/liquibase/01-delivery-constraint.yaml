@@ -1,0 +1,18 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            changes:
+                -   addForeignKeyConstraint:
+                        baseColumnNames: receiver_id
+                        baseTableName: raeda_delivery
+                        constraintName: fk_delivery__receiver_id
+                        referencedColumnNames: id
+                        referencedTableName: raeda_receiver
+
+                -   addForeignKeyConstraint:
+                        baseColumnNames: sender_id
+                        baseTableName: raeda_delivery
+                        constraintName: fk_delivery__sender_id
+                        referencedColumnNames: id
+                        referencedTableName: raeda_customer

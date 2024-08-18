@@ -1,0 +1,12 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            changes:
+                -   addForeignKeyConstraint:
+                        baseColumnNames: delivery_id
+                        baseTableName: raeda_delivery_item
+                        constraintName: fk_delivery_item__delivery_id
+                        referencedColumnNames: id
+                        referencedTableName: raeda_delivery
+

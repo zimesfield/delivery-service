@@ -1,0 +1,40 @@
+databaseChangeLog:
+    -   changeSet:
+            id: 20240813235613
+            author: cyprian
+            preConditions:
+                -   onFail: MARK_RAN
+                    not:
+                        tableExists:
+                            tableName: raeda_date_time_wrapper
+            changes:
+                -   createTable:
+                        tableName: raeda_date_time_wrapper
+                        columns:
+                            -   column:
+                                    name: id
+                                    type: BIGINT
+                                    constraints:
+                                        primaryKey: true
+                                        primaryKeyName: date_time_wrapperPK
+                            -   column:
+                                    name: instant
+                                    type: timestamp
+                            -   column:
+                                    name: local_date_time
+                                    type: timestamp
+                            -   column:
+                                    name: offset_date_time
+                                    type: timestamp
+                            -   column:
+                                    name: zoned_date_time
+                                    type: timestamp
+                            -   column:
+                                    name: local_time
+                                    type: time
+                            -   column:
+                                    name: offset_time
+                                    type: time
+                            -   column:
+                                    name: local_date
+                                    type: date
