@@ -13,6 +13,7 @@
         <groupId>com.zimesfield</groupId>
         <artifactId>parent</artifactId>
         <version>0.0.2-SNAPSHOT</version>
+        <relativePath /> <!-- Lookup parent from the repository -->
     </parent>
 
     <properties>
