@@ -1,0 +1,430 @@
+openapi: "3.0.0"
+info:
+  title: Delivery Contract
+  version: 1.0.0
+security:
+  - oauth: [ jhipster, email, profile ]
+  - openId: [ jhipster, email, profile ]
+servers:
+  - url: http://localhost:8082/api
+tags:
+  - name: DeliveryResource
+    description: Delivery information
+paths:
+  /deliveries:
+    post:
+      operationId: request
+      tags:
+        - DeliveryResource
+      description: Request for a shipment delivery
+      requestBody:
+        description: Request information and destination detail
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryRequest"
+      responses:
+        "200":
+          description: Registration was successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+        "403":
+          description: You do not have access to this resource
+        "405":
+          description: This is request is not allowed
+      security:
+        - oauth: [ jhipster, email, profile ]
+        - openId: [ jhipster, email, profile ]
+
+    get:
+      operationId: getDeliveries
+      tags:
+        - DeliveryResource
+      description: Return the list of deliveries for a logged in user
+      parameters:
+        - name: pageable
+          in: query
+          description: the pagination information.
+          required: true
+          schema:
+            $ref: '#/components/schemas/Pageable'
+      responses:
+        "200":
+          description: get all users with all the details - calling this are only allowed for the administrators.
+          headers:
+            pageable:
+              $ref: '#/components/headers/PageResponse'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeliveryResponse'
+
+        "400":
+          description: Request is empty
+        "405":
+          description: Not allowed to make this request
+
+      security:
+        - oauth: [ jhipster, email, profile ]
+        - openId: [ jhipster, email, profile ]
+
+  /deliveries/{deliveryId}:
+    get:
+      operationId: getDelivery
+      tags:
+        - DeliveryResource
+      description: Returns a single user information
+      parameters:
+        - name: deliveryId
+          in: path
+          description: the uuid of the delivery to view
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        "200":
+          description: returns the list of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+        "400":
+          description: Request is empty
+        "405":
+          description: Not allowed to make this request
+
+components:
+  headers:
+    PageResponse:
+      schema:
+        title: PageResponse
+        type: object
+        properties:
+          totalPages:
+            type: integer
+          totalElements:
+            type: integer
+            format: int32
+          size:
+            type: integer
+            example: 10
+          pageNumber:
+            type: integer
+            example: 0
+  schemas:
+    Pageable:
+      title: Pageable
+      type: object
+      properties:
+        pageSize:
+          type: integer
+          example: 20
+          description: Size of the requested page
+        pageNumber:
+          type: integer
+          example: 0
+          description: Page number of the requested page
+        sort:
+          type: string
+          example: "uuid, asc"
+          description: |
+            Sorting criteria in the format: property(,asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+
+    DeliveryResponsePage:
+      description: Delivery response page
+      title: DeliveryResponsePage
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryResponse'
+    DeliveryRequest:
+      type: object
+      description: Delivery parcel type
+      required:
+        - sender
+        - receiver
+        - items
+      properties:
+        sender:
+          $ref: '#/components/schemas/Customer'
+        receiver:
+          $ref: '#/components/schemas/Customer'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        amount:
+          $ref: '#/components/schemas/EstimatedAmount'
+        deliveryType:
+          type: string
+          example: Document
+          enum:
+            - Document
+            - Parcel
+    DeliveryResponse:
+      type: object
+      description: Delivery parcel type
+      required:
+        - items
+        - sender
+        - receiver
+      properties:
+        deliveryId:
+          type: string
+        sender:
+          $ref: '#/components/schemas/Customer'
+        receiver:
+          $ref: '#/components/schemas/Customer'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        pickupDate:
+          type: string
+          format: LocalDateTime
+        deliveryDate:
+          type: string
+          format: LocalDateTime
+        deliveryType:
+          type: string
+
+    DeliveryHistory:
+      type: object
+      description: Delivery parcel type
+      properties:
+        activity:
+          type: string
+          enum:
+            - PROCESSING
+            - PICKUP
+            - PACKAGING
+            - SHIPPING
+            - DELIVERED
+          default: PROCESSING
+        parcel:
+          $ref: '#/components/schemas/DeliveryResponse'
+        description:
+          type: string
+          example: Request received for delivery
+
+    EstimatedAmount:
+      type: object
+      description: Delivery parcel type
+      properties:
+        currency:
+          type: string
+          example: NGN
+        value:
+          type: number
+          format: int64
+
+    Item:
+      type: object
+      description: Delivery parcel type
+      required:
+        - name
+        - weight
+        - quantity
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Laptop
+        weight:
+          $ref: '#/components/schemas/Weight'
+        quantity:
+          type: number
+          example: 5
+        description:
+          type: string
+          example: Hp Laptops 2024
+
+    Weight:
+      type: object
+      description: Weight of parcel
+      required:
+        - mass
+        - measurement
+      properties:
+        mass:
+          type: number
+          example: 14.0
+        measurement:
+          type: string
+          enum:
+            - kg
+            - g
+          default: kg
+
+    Priority:
+      type: object
+      description: DeliveryPriority of delivery
+      properties:
+        express:
+          type: boolean
+          default: false
+          example: true
+        pickup:
+          type: boolean
+          default: true
+          example: true
+
+    Address:
+      type: object
+      description: CustomerModel information
+      required:
+        - country
+        - state
+        - area
+        - street
+        - landmark
+      properties:
+        country:
+          type: string
+          default: Nigeria
+          example: Nigeria
+        state:
+          type: string
+          example: Lagos
+        area:
+          type: string
+          example: Eti Osa
+        street:
+          type: string
+          example: 5 Aiyetoro street, Ajah
+        landmark:
+          type: string
+          example: Ajah market
+
+    Contact:
+      type: object
+      description: CustomerModel contact information
+      required:
+        - phoneNumber
+      properties:
+        phoneNumber:
+          type: string
+          example: '0904653622'
+        alternatePhoneNumber:
+          type: string
+          example: '0904353652'
+        email:
+          type: string
+          example: john.doe@raeda.com
+    BioData:
+      type: object
+      description: UserModel BioData
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+    Customer:
+      type: object
+      description: CustomerModel information
+      required:
+        - bioData
+        - contact
+        - address
+      properties:
+        bioData:
+          $ref: '#/components/schemas/BioData'
+        contact:
+          $ref: '#/components/schemas/Contact'
+        address:
+          $ref: '#/components/schemas/Address'
+
+    UserInfo:
+      type: object
+      description: Delivery request details
+      properties:
+        id:
+          type: string
+        login:
+          type: string
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          description: |
+            An absolute URI that identifies the problem type.  When dereferenced,
+            it SHOULD provide human-readable documentation for the problem type
+            (e.g., using HTML).
+          default: 'about:blank'
+          example: 'https://zalando.github.io/problem/constraint-violation'
+        title:
+          type: string
+          description: |
+            A short, summary of the problem type. Written in english and readable
+            for engineers (usually not suited for non technical stakeholders and
+            not localized); example: Service Unavailable
+        status:
+          type: integer
+          format: int32
+          description: |
+            The HTTP status code generated by the origin server for this occurrence
+            of the problem.
+          minimum: 100
+          maximum: 600
+          exclusiveMaximum: true
+          example: 503
+        detail:
+          type: string
+          description: |
+            A human readable explanation specific to this occurrence of the
+            problem.
+          example: Connection to database timed out
+        instance:
+          type: string
+          format: uri
+          description: |
+            An absolute URI that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
+
+  responses:
+    Problem:
+      description: error occurred - see status code and problem object for more information.
+      content:
+        'application/problem+json':
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+
+
+  securitySchemes:
+    oauth:
+      type: oauth2
+      description: OAuth2 authentication with KeyCloak
+      flows:
+        authorizationCode:
+          authorizationUrl: http://localhost:9080/realms/jhipster/protocol/openid-connect/auth
+          tokenUrl: http://localhost:9080/realms/jhipster/protocol/openid-connect/token
+          scopes:
+            jhipster: Jhipster specific claims
+            email: Email claims
+            profile: Profile claims
+    openId:
+      type: openIdConnect
+      description: OpenID Connect authentication with KeyCloak
+      openIdConnectUrl: http://localhost:9080/realms/jhipster/.well-known/openid-configuration
+
